@@ -1,6 +1,12 @@
 streamlit
 pandas
 numpy
+scikit-learn
 matplotlib
 seaborn
-scikit-learn
+statsmodels
+xgboost
+catboost
+shap
+torch
+pytorch-tabnet
