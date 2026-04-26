@@ -239,7 +239,7 @@ with dashboard_tab:
     st.subheader("2. Vitamin D Levels by Deficiency Status")
     fig, ax = plt.subplots()
     ax.boxplot([
-    df_raw[df_raw['deficient'] == 0]['vitamin_d_ng_ml']
+    df_raw[df_raw['deficient'] == 0]['vitamin_d_ng_ml'],
     df_raw[df_raw['deficient'] == 1]['vitamin_d_ng_ml']
     ])
     ax.set_xticks([1, 2], labels=['Non-Deficient', 'Deficient'])
