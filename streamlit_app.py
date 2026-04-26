@@ -70,6 +70,7 @@ def load_and_preprocess_data():
     df.rename(columns={'deficient_label': 'deficient'}, inplace=True)
 
     # Drop vitamin_d_ng_ml as 'deficient' is the target
+    df_raw = df.copy()
     df = df.drop('vitamin_d_ng_ml', axis=1)
 
     # Convert target to object before encoding, then to int for modeling
@@ -228,7 +229,7 @@ with dashboard_tab:
     # 1. Vitamin D Distribution
     st.subheader("1. Distribution of Serum Vitamin D Levels")
     fig, ax = plt.subplots()
-    ax.hist(df['vitamin_d_ng_ml'], bins=30)
+    ax.hist(df_raw['vitamin_d_ng_ml'], bins=30)
     ax.set_title('Distribution of Serum Vitamin D Levels')
     ax.set_xlabel('Vitamin D (ng/ml)')
     ax.set_ylabel('Frequency')
@@ -238,8 +239,8 @@ with dashboard_tab:
     st.subheader("2. Vitamin D Levels by Deficiency Status")
     fig, ax = plt.subplots()
     ax.boxplot([
-        df[df['deficient'] == 0]['vitamin_d_ng_ml'],
-        df[df['deficient'] == 1]['vitamin_d_ng_ml']
+    df_raw[df_raw['deficient'] == 0]['vitamin_d_ng_ml']
+    df_raw[df_raw['deficient'] == 1]['vitamin_d_ng_ml']
     ])
     ax.set_xticks([1, 2], labels=['Non-Deficient', 'Deficient'])
     ax.set_title('Vitamin D Levels by Deficiency Status')
@@ -249,7 +250,7 @@ with dashboard_tab:
     # 3. Sun Exposure vs Vitamin D
     st.subheader("3. Sun Exposure vs Vitamin D (Primary Biological Driver)")
     fig, ax = plt.subplots()
-    ax.scatter(df['sun_hours_per_day'], df['vitamin_d_ng_ml'])
+    ax.scatter(df_raw['sun_hours_per_day'], df_raw['vitamin_d_ng_ml'])
     ax.set_title('Sun Exposure vs Vitamin D Levels')
     ax.set_xlabel('Sun Hours per Day')
     ax.set_ylabel('Vitamin D (ng/ml)')
@@ -258,7 +259,7 @@ with dashboard_tab:
     # 4. Latitude Effect (Geographical Determinant)
     st.subheader("4. Latitude Effect (Geographical Determinant)")
     fig, ax = plt.subplots()
-    ax.scatter(df['latitude_deg'], df['vitamin_d_ng_ml'])
+    ax.scatter(df_raw['latitude_deg'], df_raw['vitamin_d_ng_ml'])
     ax.set_title('Latitude vs Vitamin D Levels')
     ax.set_xlabel('Latitude (degrees)')
     ax.set_ylabel('Vitamin D (ng/ml)')
@@ -267,7 +268,7 @@ with dashboard_tab:
     # 5. Screen Time vs Vitamin D (Modern Lifestyle Factor)
     st.subheader("5. Screen Time vs Vitamin D (Modern Lifestyle Factor)")
     fig, ax = plt.subplots()
-    ax.scatter(df['screen_time_hours'], df['vitamin_d_ng_ml'])
+    ax.scatter(df_raw['screen_time_hours'], df_raw['vitamin_d_ng_ml'])
     ax.set_title('Screen Time vs Vitamin D Levels')
     ax.set_xlabel('Screen Time (hours/day)')
     ax.set_ylabel('Vitamin D (ng/ml)')
@@ -276,7 +277,7 @@ with dashboard_tab:
     # 6. Outdoor Activity vs Vitamin D (Behavioral Exposure Factor)
     st.subheader("6. Outdoor Activity vs Vitamin D (Behavioral Exposure Factor)")
     fig, ax = plt.subplots()
-    ax.scatter(df['outdoor_activity_minutes'], df['vitamin_d_ng_ml'])
+    ax.scatter(df_raw['outdoor_activity_minutes'], df_raw['vitamin_d_ng_ml'])
     ax.set_title('Outdoor Activity vs Vitamin D Levels')
     ax.set_xlabel('Outdoor Activity (minutes/day)')
     ax.set_ylabel('Vitamin D (ng/ml)')
@@ -286,7 +287,7 @@ with dashboard_tab:
     st.subheader("Correlation Heatmap")
     # Ensure df_encoded has 'deficient' as numeric for correlation
     df_numeric_for_corr = df_encoded.copy()
-    df_numeric_for_corr['deficient'] = df_numeric_for_corr['deficient'].astype(float)
+    df_numeric_for_corr = df_numeric_for_corr.astype(float, errors='ignore')
     
     fig, ax = plt.subplots(figsize=(15, 12))
     sns.heatmap(df_numeric_for_corr.corr(), cmap='coolwarm', annot=False, fmt=".2f", ax=ax)
