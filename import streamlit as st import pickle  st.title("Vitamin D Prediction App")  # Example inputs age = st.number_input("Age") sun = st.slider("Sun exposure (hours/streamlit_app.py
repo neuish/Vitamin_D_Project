@@ -1,6 +1,8 @@
-%%writefile streamlit_app.py
+
 
 import streamlit as st
+import pickle
+import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import seaborn as sns
