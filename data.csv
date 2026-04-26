@@ -1,1 +1,1 @@
-df.to_csv("data.csv", index=False)
+df = pd.read_csv('Vitamin_D_Dataset.csv')
