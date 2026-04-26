@@ -168,10 +168,10 @@ def load_and_preprocess_data():
         max_epochs=50, patience=10, batch_size=256, virtual_batch_size=128
     )
 
-    return df, df_encoded, x_train, x_test, y_train, y_test, scaler, continuous_cols_to_scale, selected_lr_features, lr_pred_model, OPTIMAL_THRESHOLD, xgb_model, cat_model, tabnet_model
+    return df_raw, df_encoded, x_train, x_test, y_train, y_test, scaler, continuous_cols_to_scale, selected_lr_features, lr_pred_model, OPTIMAL_THRESHOLD, xgb_model, cat_model, tabnet_model
 
 
-df, df_encoded, x_train, x_test, y_train, y_test, scaler, continuous_cols_to_scale, selected_lr_features, lr_pred_model, OPTIMAL_THRESHOLD, xgb_model, cat_model, tabnet_model = load_and_preprocess_data()
+df_raw, df_encoded, x_train, x_test, y_train, y_test, scaler, continuous_cols_to_scale, selected_lr_features, lr_pred_model, OPTIMAL_THRESHOLD, xgb_model, cat_model, tabnet_model = load_and_preprocess_data()
 
 
 # --- Helper function to compute metrics ---
