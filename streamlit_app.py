@@ -519,9 +519,14 @@ with prediction_tab:
         st.write("**Summary of feature contributions for this prediction:**")
         # Bar plot of feature contributions for the selected instance
         fig_bar_single, ax_bar_single = plt.subplots(figsize=(8, 5))
-        shap.plot_individual_decision_plot(
-            explainer_xgb.expected_value, shap_values_xgb[example_idx], x_test_xgb.iloc[example_idx],
-            feature_names=x_test_xgb.columns, show=False
+        shap.waterfall_plot(
+        shap.Explanation(
+                values=shap_values_xgb[example_idx],
+                base_values=explainer_xgb.expected_value,
+                data=x_test_xgb.iloc[example_idx],
+                feature_names=x_test_xgb.columns
+            ),
+            show=False
         )
         plt.tight_layout()
         st.pyplot(fig_bar_single)
