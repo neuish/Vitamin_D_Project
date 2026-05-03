@@ -1,5 +1,4 @@
 
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -519,8 +518,8 @@ with prediction_tab:
         lr_example_idx = st.slider("Select an example from test set for SHAP explanation:", 0, len(x_test) - 1, 0, key='lr_shap_slider')
         if st.button("Generate SHAP Explanation for LR Example", key='lr_shap_button'):
             # Extract coefficients and intercept from the statsmodels result object
-            model_coef = lr_pred_model.params[1:].values
-            model_intercept = lr_pred_model.params[0]
+            model_coef = lr_pred_model.params.drop('const').values
+            model_intercept = lr_pred_model.params['const']
 
             # Create SHAP explainer for Logistic Regression
             explainer_lr = shap.LinearExplainer((model_coef, model_intercept), x_train[selected_lr_features])
@@ -565,8 +564,8 @@ with prediction_tab:
         st.write("--- Recommended for local development/exploration ---")
         if st.checkbox("Show global SHAP summary plots (computationally intensive)", key='lr_global_shap_checkbox'):
             # Compute SHAP values for the whole test set for global plots
-            model_coef = lr_pred_model.params[1:].values
-            model_intercept = lr_pred_model.params[0]
+            model_coef = lr_pred_model.params.drop('const').values
+            model_intercept = lr_pred_model.params['const']
             explainer_lr_global = shap.LinearExplainer((model_coef, model_intercept), x_train[selected_lr_features])
             shap_values_lr_global = explainer_lr_global.shap_values(x_test[selected_lr_features])
 
