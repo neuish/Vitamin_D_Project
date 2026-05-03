@@ -6,10 +6,8 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, roc_curve, classification_report, confusion_matrix
 import statsmodels.api as sm
-from statsmodels.stats.outliers_influence import variance_inflation_factor
 from sklearn.feature_selection import RFE
 from xgboost import XGBClassifier
 from catboost import CatBoostClassifier
@@ -28,14 +26,13 @@ st.title("Vitamin D Deficiency Prediction App")
 
 @st.cache_data
 def load_and_preprocess_data():
-    # Assuming the CSV is accessible, e.g., in the same directory as the Streamlit app
-    # For Colab, you would mount drive and read. For Streamlit, it needs to be available.
-    # For this example, let's assume it's uploaded or in the same repo.
+    df = None # Initialize df to None
     try:
         df = pd.read_csv('Vitamin_D_Dataset.csv')
     except FileNotFoundError:
         st.error("Vitamin_D_Dataset.csv not found. Please ensure it's in the same directory as the app.")
-        st.stop()
+        # Return None for all expected outputs if file not found
+        return None, None, None, None, None, None, None, None, None, None, None, None, None, None
 
     # Data Cleaning and treating
     df.dropna(inplace=True)
@@ -173,6 +170,10 @@ def load_and_preprocess_data():
 
 df_raw, df_encoded, x_train, x_test, y_train, y_test, scaler, continuous_cols_to_scale, selected_lr_features, lr_pred_model, OPTIMAL_THRESHOLD, xgb_model, cat_model, tabnet_model = load_and_preprocess_data()
 
+# Check if data loading was successful
+if df_raw is None:
+    st.stop() # Stop the Streamlit app if data is not loaded
+
 
 # --- Helper function to compute metrics ---
 def get_metrics(y_true, y_pred, y_prob):
@@ -188,7 +189,7 @@ def get_metrics(y_true, y_pred, y_prob):
 def draw_roc(actual, probs, title="Receiver Operating Characteristic"): # Added title parameter
     fpr, tpr, thresholds = roc_curve(actual, probs, drop_intermediate=False)
     auc_score = roc_auc_score(actual, probs)
-    fig, ax = plt.subplots(figsize=(6, 6)) # Use subplots for Streamlit
+    fig, ax = plt.subplots(figsize=(5, 5)) # Adjusted figure size
     ax.plot(fpr, tpr, label=f'ROC curve (area = {auc_score:.2f})')
     ax.plot([0, 1], [0, 1], 'k--')
     ax.set_xlim([0.0, 1.0])
@@ -230,7 +231,7 @@ with dashboard_tab:
     col1, col2 = st.columns(2)
     with col1:
         st.subheader("1. Distribution of Serum Vitamin D Levels")
-        fig, ax = plt.subplots(figsize=(6, 4)) # Adjusted figure size
+        fig, ax = plt.subplots(figsize=(5, 3)) # Adjusted figure size
         ax.hist(df_raw['vitamin_d_ng_ml'], bins=30)
         ax.set_title('Distribution of Serum Vitamin D Levels')
         ax.set_xlabel('Vitamin D (ng/ml)')
@@ -240,7 +241,7 @@ with dashboard_tab:
     # 2. Vitamin D vs Deficiency Status
     with col2:
         st.subheader("2. Vitamin D Levels by Deficiency Status")
-        fig, ax = plt.subplots(figsize=(6, 4)) # Adjusted figure size
+        fig, ax = plt.subplots(figsize=(5, 3)) # Adjusted figure size
         ax.boxplot([
             df_raw[df_raw['deficient'] == 0]['vitamin_d_ng_ml'],
             df_raw[df_raw['deficient'] == 1]['vitamin_d_ng_ml']
@@ -254,7 +255,7 @@ with dashboard_tab:
     col3, col4 = st.columns(2)
     with col3:
         st.subheader("3. Sun Exposure vs Vitamin D (Primary Biological Driver)")
-        fig, ax = plt.subplots(figsize=(6, 4)) # Adjusted figure size
+        fig, ax = plt.subplots(figsize=(5, 3)) # Adjusted figure size
         ax.scatter(df_raw['sun_hours_per_day'], df_raw['vitamin_d_ng_ml'])
         ax.set_title('Sun Exposure vs Vitamin D Levels')
         ax.set_xlabel('Sun Hours per Day')
@@ -264,7 +265,7 @@ with dashboard_tab:
     # 4. Latitude Effect (Geographical Determinant)
     with col4:
         st.subheader("4. Latitude Effect (Geographical Determinant)")
-        fig, ax = plt.subplots(figsize=(6, 4)) # Adjusted figure size
+        fig, ax = plt.subplots(figsize=(5, 3)) # Adjusted figure size
         ax.scatter(df_raw['latitude_deg'], df_raw['vitamin_d_ng_ml'])
         ax.set_title('Latitude vs Vitamin D Levels')
         ax.set_xlabel('Latitude (degrees)')
@@ -275,7 +276,7 @@ with dashboard_tab:
     col5, col6 = st.columns(2)
     with col5:
         st.subheader("5. Screen Time vs Vitamin D (Modern Lifestyle Factor)")
-        fig, ax = plt.subplots(figsize=(6, 4)) # Adjusted figure size
+        fig, ax = plt.subplots(figsize=(5, 3)) # Adjusted figure size
         ax.scatter(df_raw['screen_time_hours'], df_raw['vitamin_d_ng_ml'])
         ax.set_title('Screen Time vs Vitamin D Levels')
         ax.set_xlabel('Screen Time (hours/day)')
@@ -285,7 +286,7 @@ with dashboard_tab:
     # 6. Outdoor Activity vs Vitamin D
     with col6:
         st.subheader("6. Outdoor Activity vs Vitamin D (Behavioral Exposure Factor)")
-        fig, ax = plt.subplots(figsize=(6, 4)) # Adjusted figure size
+        fig, ax = plt.subplots(figsize=(5, 3)) # Adjusted figure size
         ax.scatter(df_raw['outdoor_activity_minutes'], df_raw['vitamin_d_ng_ml'])
         ax.set_title('Outdoor Activity vs Vitamin D Levels')
         ax.set_xlabel('Outdoor Activity (minutes/day)')
@@ -298,7 +299,7 @@ with dashboard_tab:
     df_numeric_for_corr = df_encoded.copy()
     df_numeric_for_corr = df_numeric_for_corr.astype(float, errors='ignore')
 
-    fig, ax = plt.subplots(figsize=(10, 8)) # Adjusted figure size for heatmap
+    fig, ax = plt.subplots(figsize=(8, 6)) # Adjusted figure size for heatmap
     sns.heatmap(df_numeric_for_corr.corr(), cmap='coolwarm', annot=False, fmt=".2f", ax=ax)
     ax.set_title('Correlation Heatmap of Features')
     st.pyplot(fig)
@@ -346,7 +347,7 @@ with model_eval_tab:
 
     # --- ROC Curves Comparison ---
     st.subheader("ROC Curve Comparison")
-    fig_roc, ax_roc = plt.subplots(figsize=(8, 8))
+    fig_roc, ax_roc = plt.subplots(figsize=(7, 5)) # Adjusted figure size
     ax_roc.plot([0, 1], [0, 1], 'k--', label='Random Classifier')
 
     fpr_lr, tpr_lr, _ = roc_curve(y_test, y_prob_lr)
@@ -383,7 +384,7 @@ with model_eval_tab:
     treat_all = [prevalence - (1 - prevalence) * (pt / (1 - pt)) for pt in thresholds_dca]
     treat_none = [0 for _ in thresholds_dca]
 
-    fig_dca, ax_dca = plt.subplots(figsize=(8, 6))
+    fig_dca, ax_dca = plt.subplots(figsize=(7, 5)) # Adjusted figure size
     ax_dca.plot(thresholds_dca, nb_lr, label='Logistic Regression')
     ax_dca.plot(thresholds_dca, nb_xgb, label='XGBoost')
     ax_dca.plot(thresholds_dca, nb_cat, label='CatBoost')
@@ -514,7 +515,7 @@ with prediction_tab:
         st.write(f"**Actual Status for Example {example_idx}:** {y_test.iloc[example_idx]}")
 
         # Force plot for a single instance
-        fig_force, ax_force = plt.subplots(figsize=(10, 3))
+        fig_force, ax_force = plt.subplots(figsize=(8, 2.5)) # Adjusted figure size
         shap.force_plot(
             explainer_xgb.expected_value,
             shap_values_xgb[example_idx],
@@ -547,13 +548,13 @@ with prediction_tab:
         shap_values_xgb = explainer_xgb.shap_values(x_test_xgb)
 
         st.subheader("Global Feature Importance (XGBoost)")
-        fig_summary_bar, ax_summary_bar = plt.subplots(figsize=(10, 7))
+        fig_summary_bar, ax_summary_bar = plt.subplots(figsize=(8, 6)) # Adjusted figure size
         shap.summary_plot(shap_values_xgb, x_test_xgb, plot_type='bar', max_display=15, show=False)
         plt.tight_layout()
         st.pyplot(fig_summary_bar)
 
         st.subheader("Global Feature Impact (Beeswarm Plot - XGBoost)")
-        fig_beeswarm, ax_beeswarm = plt.subplots(figsize=(10, 7))
+        fig_beeswarm, ax_beeswarm = plt.subplots(figsize=(8, 6)) # Adjusted figure size
         shap.summary_plot(shap_values_xgb, x_test_xgb, max_display=15, show=False)
         plt.tight_layout()
         st.pyplot(fig_beeswarm)
