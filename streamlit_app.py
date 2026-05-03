@@ -509,14 +509,80 @@ with prediction_tab:
             st.write(f"**Predicted Probability of Deficiency:** {prediction_result['risk_probability']:.2f}")
             st.write(f"**Predicted Status:** {prediction_result['prediction']}")
 
-        # --- SHAP Integration for example explanation (using XGBoost as an example) ---
+        # --- SHAP Integration for Logistic Regression ---
+        st.subheader("Feature Importance Explanation (SHAP - Logistic Regression Model)")
+        st.write("This section provides insights into which features influence the prediction for a specific example using the Logistic Regression model.")
+
+        lr_example_idx = st.slider("Select an example from test set for LR SHAP explanation:", 0, len(x_test) - 1, 0, key='lr_shap_slider')
+        if st.button("Generate SHAP Explanation for LR Example", key='lr_shap_button'):
+            # Extract coefficients and intercept from the statsmodels result object
+            model_coef = lr_pred_model.params[1:].values
+            model_intercept = lr_pred_model.params[0]
+
+            # Create SHAP explainer for Logistic Regression
+            explainer_lr = shap.LinearExplainer((model_coef, model_intercept), x_train[selected_lr_features])
+
+            # Compute SHAP values for the selected example
+            shap_values_lr_single = explainer_lr.shap_values(x_test[selected_lr_features].iloc[lr_example_idx])
+
+            st.write(f"**Actual Status for Example {lr_example_idx}:** {y_test.iloc[lr_example_idx]}")
+
+            # Force plot for a single instance
+            fig_force_lr, ax_force_lr = plt.subplots(figsize=(5, 2)) # Adjusted figure size
+            shap.force_plot(
+                explainer_lr.expected_value,
+                shap_values_lr_single,
+                x_test[selected_lr_features].iloc[lr_example_idx],
+                matplotlib=True,
+                show=False
+            )
+            plt.tight_layout()
+            st.pyplot(fig_force_lr)
+
+            st.write("**Summary of feature contributions for this Logistic Regression prediction:**")
+            # Bar plot of feature contributions for the selected instance
+            fig_bar_single_lr, ax_bar_single_lr = plt.subplots(figsize=(5, 3))
+            shap.waterfall_plot(
+            shap.Explanation(
+                    values=shap_values_lr_single,
+                    base_values=explainer_lr.expected_value,
+                    data=x_test[selected_lr_features].iloc[lr_example_idx],
+                    feature_names=x_test[selected_lr_features].columns
+                ),
+                show=False
+            )
+            plt.tight_layout()
+            st.pyplot(fig_bar_single_lr)
+
+
+        st.write("--- Recommended for local development/exploration ---")
+        if st.checkbox("Show global SHAP summary plots (computationally intensive) - Logistic Regression", key='lr_global_shap_checkbox'):
+            # Compute SHAP values for the whole test set for global plots
+            model_coef = lr_pred_model.params[1:].values
+            model_intercept = lr_pred_model.params[0]
+            explainer_lr_global = shap.LinearExplainer((model_coef, model_intercept), x_train[selected_lr_features])
+            shap_values_lr_global = explainer_lr_global.shap_values(x_test[selected_lr_features])
+
+            st.subheader("Global Feature Importance (Logistic Regression)")
+            fig_summary_bar_lr, ax_summary_bar_lr = plt.subplots(figsize=(5, 3)) # Adjusted figure size
+            shap.summary_plot(shap_values_lr_global, x_test[selected_lr_features], plot_type='bar', max_display=15, show=False)
+            plt.tight_layout()
+            st.pyplot(fig_summary_bar_lr)
+
+            st.subheader("Global Feature Impact (Beeswarm Plot - Logistic Regression)")
+            fig_beeswarm_lr, ax_beeswarm_lr = plt.subplots(figsize=(5, 3)) # Adjusted figure size
+            shap.summary_plot(shap_values_lr_global, x_test[selected_lr_features], max_display=15, show=False)
+            plt.tight_layout()
+            st.pyplot(fig_beeswarm_lr)
+
+        # --- Existing SHAP Integration for XGBoost (moved below LR) ---
         st.subheader("Feature Importance Explanation (SHAP - XGBoost Model)")
         st.write("This section provides insights into which features influence the prediction for a specific example.")
         st.write("Note: SHAP values are calculated for the XGBoost model here. Generating these plots can be resource-intensive.")
 
         # Display example SHAP plot for an instance from the test set
-        example_idx = st.slider("Select an example from test set for SHAP explanation:", 0, len(x_test) - 1, 0)
-        if st.button("Generate SHAP Explanation for Example"):
+        example_idx = st.slider("Select an example from test set for SHAP explanation:", 0, len(x_test) - 1, 0, key='xgb_shap_slider')
+        if st.button("Generate SHAP Explanation for Example", key='xgb_shap_button'):
             # Ensure x_test_xgb is used as it was for XGBoost predictions
             x_test_xgb = x_test.reindex(columns=x_train.columns, fill_value=0) # Make sure it has all columns
             explainer_xgb = shap.TreeExplainer(xgb_model)
@@ -553,7 +619,7 @@ with prediction_tab:
 
 
         st.write("--- Recommended for local development/exploration ---")
-        if st.checkbox("Show global SHAP summary plots (computationally intensive)"):
+        if st.checkbox("Show global SHAP summary plots (computationally intensive) - XGBoost", key='xgb_global_shap_checkbox'):
             explainer_xgb = shap.TreeExplainer(xgb_model)
             shap_values_xgb = explainer_xgb.shap_values(x_test_xgb)
 
