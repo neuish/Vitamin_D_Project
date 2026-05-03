@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -31,6 +32,7 @@ def load_and_preprocess_data():
         df = pd.read_csv('Vitamin_D_Dataset.csv')
     except FileNotFoundError:
         st.error("Vitamin_D_Dataset.csv not found. Please ensure it's in the same directory as the app.")
+        st.stop() # Stop the Streamlit app if file not found
         # Return None for all expected outputs if file not found
         return None, None, None, None, None, None, None, None, None, None, None, None, None, None
 
@@ -98,7 +100,7 @@ def load_and_preprocess_data():
     df_encoded = df_encoded.drop(columns=['age', 'vitamin_d_supplement_iu'])
 
     # Ensure target variable is numeric for modeling
-    df_encoded['deficient'] = df_encoded['deficient'].astype(int)
+    df_encoded['deficient'] = df['deficient'].astype(int)
 
     x = df_encoded.drop(['deficient'], axis=1)
     y = df_encoded['deficient']
@@ -189,7 +191,7 @@ def get_metrics(y_true, y_pred, y_prob):
 def draw_roc(actual, probs, title="Receiver Operating Characteristic"): # Added title parameter
     fpr, tpr, thresholds = roc_curve(actual, probs, drop_intermediate=False)
     auc_score = roc_auc_score(actual, probs)
-    fig, ax = plt.subplots(figsize=(5, 5)) # Adjusted figure size
+    fig, ax = plt.subplots(figsize=(5, 3)) # Adjusted figure size
     ax.plot(fpr, tpr, label=f'ROC curve (area = {auc_score:.2f})')
     ax.plot([0, 1], [0, 1], 'k--')
     ax.set_xlim([0.0, 1.0])
@@ -347,7 +349,7 @@ with model_eval_tab:
 
     # --- ROC Curves Comparison ---
     st.subheader("ROC Curve Comparison")
-    fig_roc, ax_roc = plt.subplots(figsize=(7, 5)) # Adjusted figure size
+    fig_roc, ax_roc = plt.subplots(figsize=(5, 3)) # Adjusted figure size
     ax_roc.plot([0, 1], [0, 1], 'k--', label='Random Classifier')
 
     fpr_lr, tpr_lr, _ = roc_curve(y_test, y_prob_lr)
@@ -384,7 +386,7 @@ with model_eval_tab:
     treat_all = [prevalence - (1 - prevalence) * (pt / (1 - pt)) for pt in thresholds_dca]
     treat_none = [0 for _ in thresholds_dca]
 
-    fig_dca, ax_dca = plt.subplots(figsize=(7, 5)) # Adjusted figure size
+    fig_dca, ax_dca = plt.subplots(figsize=(5, 3)) # Adjusted figure size
     ax_dca.plot(thresholds_dca, nb_lr, label='Logistic Regression')
     ax_dca.plot(thresholds_dca, nb_xgb, label='XGBoost')
     ax_dca.plot(thresholds_dca, nb_cat, label='CatBoost')
@@ -515,7 +517,7 @@ with prediction_tab:
         st.write(f"**Actual Status for Example {example_idx}:** {y_test.iloc[example_idx]}")
 
         # Force plot for a single instance
-        fig_force, ax_force = plt.subplots(figsize=(8, 2.5)) # Adjusted figure size
+        fig_force, ax_force = plt.subplots(figsize=(5, 2)) # Adjusted figure size
         shap.force_plot(
             explainer_xgb.expected_value,
             shap_values_xgb[example_idx],
@@ -528,7 +530,7 @@ with prediction_tab:
 
         st.write("**Summary of feature contributions for this prediction:**")
         # Bar plot of feature contributions for the selected instance
-        fig_bar_single, ax_bar_single = plt.subplots(figsize=(8, 5))
+        fig_bar_single, ax_bar_single = plt.subplots(figsize=(5, 3))
         shap.waterfall_plot(
         shap.Explanation(
                 values=shap_values_xgb[example_idx],
@@ -548,13 +550,13 @@ with prediction_tab:
         shap_values_xgb = explainer_xgb.shap_values(x_test_xgb)
 
         st.subheader("Global Feature Importance (XGBoost)")
-        fig_summary_bar, ax_summary_bar = plt.subplots(figsize=(8, 6)) # Adjusted figure size
+        fig_summary_bar, ax_summary_bar = plt.subplots(figsize=(5, 3)) # Adjusted figure size
         shap.summary_plot(shap_values_xgb, x_test_xgb, plot_type='bar', max_display=15, show=False)
         plt.tight_layout()
         st.pyplot(fig_summary_bar)
 
         st.subheader("Global Feature Impact (Beeswarm Plot - XGBoost)")
-        fig_beeswarm, ax_beeswarm = plt.subplots(figsize=(8, 6)) # Adjusted figure size
+        fig_beeswarm, ax_beeswarm = plt.subplots(figsize=(5, 3)) # Adjusted figure size
         shap.summary_plot(shap_values_xgb, x_test_xgb, max_display=15, show=False)
         plt.tight_layout()
         st.pyplot(fig_beeswarm)
