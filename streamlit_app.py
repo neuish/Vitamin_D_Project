@@ -211,7 +211,7 @@ def decision_curve(y_true, y_prob, thresholds):
         FP = np.sum((y_pred == 1) & (y_true == 0))
 
         # Handle division by zero for (1-pt) when pt approaches 1
-        if (1 - pt) == 0: 
+        if (1 - pt) == 0:
             net_benefit = 0 if FP == 0 else -np.inf # Treat as very large penalty if FP exists
         else:
             net_benefit = (TP / N) - (FP / N) * (pt / (1 - pt))
@@ -227,69 +227,78 @@ with dashboard_tab:
     st.header("Exploratory Data Analysis")
 
     # 1. Vitamin D Distribution
-    st.subheader("1. Distribution of Serum Vitamin D Levels")
-    fig, ax = plt.subplots()
-    ax.hist(df_raw['vitamin_d_ng_ml'], bins=30)
-    ax.set_title('Distribution of Serum Vitamin D Levels')
-    ax.set_xlabel('Vitamin D (ng/ml)')
-    ax.set_ylabel('Frequency')
-    st.pyplot(fig)
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("1. Distribution of Serum Vitamin D Levels")
+        fig, ax = plt.subplots(figsize=(6, 4)) # Adjusted figure size
+        ax.hist(df_raw['vitamin_d_ng_ml'], bins=30)
+        ax.set_title('Distribution of Serum Vitamin D Levels')
+        ax.set_xlabel('Vitamin D (ng/ml)')
+        ax.set_ylabel('Frequency')
+        st.pyplot(fig)
 
     # 2. Vitamin D vs Deficiency Status
-    st.subheader("2. Vitamin D Levels by Deficiency Status")
-    fig, ax = plt.subplots()
-    ax.boxplot([
-    df_raw[df_raw['deficient'] == 0]['vitamin_d_ng_ml'],
-    df_raw[df_raw['deficient'] == 1]['vitamin_d_ng_ml']
-    ])
-    ax.set_xticks([1, 2], labels=['Non-Deficient', 'Deficient'])
-    ax.set_title('Vitamin D Levels by Deficiency Status')
-    ax.set_ylabel('Vitamin D (ng/ml)')
-    st.pyplot(fig)
+    with col2:
+        st.subheader("2. Vitamin D Levels by Deficiency Status")
+        fig, ax = plt.subplots(figsize=(6, 4)) # Adjusted figure size
+        ax.boxplot([
+            df_raw[df_raw['deficient'] == 0]['vitamin_d_ng_ml'],
+            df_raw[df_raw['deficient'] == 1]['vitamin_d_ng_ml']
+        ])
+        ax.set_xticks([1, 2], labels=['Non-Deficient', 'Deficient'])
+        ax.set_title('Vitamin D Levels by Deficiency Status')
+        ax.set_ylabel('Vitamin D (ng/ml)')
+        st.pyplot(fig)
 
     # 3. Sun Exposure vs Vitamin D
-    st.subheader("3. Sun Exposure vs Vitamin D (Primary Biological Driver)")
-    fig, ax = plt.subplots()
-    ax.scatter(df_raw['sun_hours_per_day'], df_raw['vitamin_d_ng_ml'])
-    ax.set_title('Sun Exposure vs Vitamin D Levels')
-    ax.set_xlabel('Sun Hours per Day')
-    ax.set_ylabel('Vitamin D (ng/ml)')
-    st.pyplot(fig)
+    col3, col4 = st.columns(2)
+    with col3:
+        st.subheader("3. Sun Exposure vs Vitamin D (Primary Biological Driver)")
+        fig, ax = plt.subplots(figsize=(6, 4)) # Adjusted figure size
+        ax.scatter(df_raw['sun_hours_per_day'], df_raw['vitamin_d_ng_ml'])
+        ax.set_title('Sun Exposure vs Vitamin D Levels')
+        ax.set_xlabel('Sun Hours per Day')
+        ax.set_ylabel('Vitamin D (ng/ml)')
+        st.pyplot(fig)
 
     # 4. Latitude Effect (Geographical Determinant)
-    st.subheader("4. Latitude Effect (Geographical Determinant)")
-    fig, ax = plt.subplots()
-    ax.scatter(df_raw['latitude_deg'], df_raw['vitamin_d_ng_ml'])
-    ax.set_title('Latitude vs Vitamin D Levels')
-    ax.set_xlabel('Latitude (degrees)')
-    ax.set_ylabel('Vitamin D (ng/ml)')
-    st.pyplot(fig)
+    with col4:
+        st.subheader("4. Latitude Effect (Geographical Determinant)")
+        fig, ax = plt.subplots(figsize=(6, 4)) # Adjusted figure size
+        ax.scatter(df_raw['latitude_deg'], df_raw['vitamin_d_ng_ml'])
+        ax.set_title('Latitude vs Vitamin D Levels')
+        ax.set_xlabel('Latitude (degrees)')
+        ax.set_ylabel('Vitamin D (ng/ml)')
+        st.pyplot(fig)
 
-    # 5. Screen Time vs Vitamin D (Modern Lifestyle Factor)
-    st.subheader("5. Screen Time vs Vitamin D (Modern Lifestyle Factor)")
-    fig, ax = plt.subplots()
-    ax.scatter(df_raw['screen_time_hours'], df_raw['vitamin_d_ng_ml'])
-    ax.set_title('Screen Time vs Vitamin D Levels')
-    ax.set_xlabel('Screen Time (hours/day)')
-    ax.set_ylabel('Vitamin D (ng/ml)')
-    st.pyplot(fig)
+    # 5. Screen Time vs Vitamin D
+    col5, col6 = st.columns(2)
+    with col5:
+        st.subheader("5. Screen Time vs Vitamin D (Modern Lifestyle Factor)")
+        fig, ax = plt.subplots(figsize=(6, 4)) # Adjusted figure size
+        ax.scatter(df_raw['screen_time_hours'], df_raw['vitamin_d_ng_ml'])
+        ax.set_title('Screen Time vs Vitamin D Levels')
+        ax.set_xlabel('Screen Time (hours/day)')
+        ax.set_ylabel('Vitamin D (ng/ml)')
+        st.pyplot(fig)
 
-    # 6. Outdoor Activity vs Vitamin D (Behavioral Exposure Factor)
-    st.subheader("6. Outdoor Activity vs Vitamin D (Behavioral Exposure Factor)")
-    fig, ax = plt.subplots()
-    ax.scatter(df_raw['outdoor_activity_minutes'], df_raw['vitamin_d_ng_ml'])
-    ax.set_title('Outdoor Activity vs Vitamin D Levels')
-    ax.set_xlabel('Outdoor Activity (minutes/day)')
-    ax.set_ylabel('Vitamin D (ng/ml)')
-    st.pyplot(fig)
+    # 6. Outdoor Activity vs Vitamin D
+    with col6:
+        st.subheader("6. Outdoor Activity vs Vitamin D (Behavioral Exposure Factor)")
+        fig, ax = plt.subplots(figsize=(6, 4)) # Adjusted figure size
+        ax.scatter(df_raw['outdoor_activity_minutes'], df_raw['vitamin_d_ng_ml'])
+        ax.set_title('Outdoor Activity vs Vitamin D Levels')
+        ax.set_xlabel('Outdoor Activity (minutes/day)')
+        ax.set_ylabel('Vitamin D (ng/ml)')
+        st.pyplot(fig)
 
     # Correlation Heatmap
     st.subheader("Correlation Heatmap")
     # Ensure df_encoded has 'deficient' as numeric for correlation
     df_numeric_for_corr = df_encoded.copy()
     df_numeric_for_corr = df_numeric_for_corr.astype(float, errors='ignore')
-    
-    fig, ax = plt.subplots(figsize=(15, 12))
+
+    fig, ax = plt.subplots(figsize=(10, 8)) # Adjusted figure size for heatmap
     sns.heatmap(df_numeric_for_corr.corr(), cmap='coolwarm', annot=False, fmt=".2f", ax=ax)
     ax.set_title('Correlation Heatmap of Features')
     st.pyplot(fig)
@@ -510,7 +519,7 @@ with prediction_tab:
             explainer_xgb.expected_value,
             shap_values_xgb[example_idx],
             x_test_xgb.iloc[example_idx],
-            matplotlib=True, 
+            matplotlib=True,
             show=False
         )
         plt.tight_layout()
