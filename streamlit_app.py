@@ -1,4 +1,5 @@
 
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -174,7 +175,7 @@ df_raw, df_encoded, x_train, x_test, y_train, y_test, scaler, continuous_cols_to
 
 # Check if data loading was successful
 if df_raw is None:
-    st.stop() # Stop the Streamlit app if data is not loaded
+    st.warning("Data could not be loaded. Some features of the app might not be available.")
 
 
 # --- Helper function to compute metrics ---
@@ -227,338 +228,347 @@ dashboard_tab, model_eval_tab, prediction_tab = st.tabs(["Dashboard", "Model Eva
 
 # --- Dashboard Tab ---
 with dashboard_tab:
-    st.header("Exploratory Data Analysis")
+    if df_raw is not None:
+        st.header("Exploratory Data Analysis")
 
-    # 1. Vitamin D Distribution
-    col1, col2 = st.columns(2)
-    with col1:
-        st.subheader("1. Distribution of Serum Vitamin D Levels")
-        fig, ax = plt.subplots(figsize=(5, 3)) # Adjusted figure size
-        ax.hist(df_raw['vitamin_d_ng_ml'], bins=30)
-        ax.set_title('Distribution of Serum Vitamin D Levels')
-        ax.set_xlabel('Vitamin D (ng/ml)')
-        ax.set_ylabel('Frequency')
+        # 1. Vitamin D Distribution
+        col1, col2 = st.columns(2)
+        with col1:
+            st.subheader("1. Distribution of Serum Vitamin D Levels")
+            fig, ax = plt.subplots(figsize=(5, 3)) # Adjusted figure size
+            ax.hist(df_raw['vitamin_d_ng_ml'], bins=30)
+            ax.set_title('Distribution of Serum Vitamin D Levels')
+            ax.set_xlabel('Vitamin D (ng/ml)')
+            ax.set_ylabel('Frequency')
+            st.pyplot(fig)
+
+        # 2. Vitamin D vs Deficiency Status
+        with col2:
+            st.subheader("2. Vitamin D Levels by Deficiency Status")
+            fig, ax = plt.subplots(figsize=(5, 3)) # Adjusted figure size
+            ax.boxplot([
+                df_raw[df_raw['deficient'] == 0]['vitamin_d_ng_ml'],
+                df_raw[df_raw['deficient'] == 1]['vitamin_d_ng_ml']
+            ])
+            ax.set_xticks([1, 2], labels=['Non-Deficient', 'Deficient'])
+            ax.set_title('Vitamin D Levels by Deficiency Status')
+            ax.set_ylabel('Vitamin D (ng/ml)')
+            st.pyplot(fig)
+
+        # 3. Sun Exposure vs Vitamin D
+        col3, col4 = st.columns(2)
+        with col3:
+            st.subheader("3. Sun Exposure vs Vitamin D (Primary Biological Driver)")
+            fig, ax = plt.subplots(figsize=(5, 3)) # Adjusted figure size
+            ax.scatter(df_raw['sun_hours_per_day'], df_raw['vitamin_d_ng_ml'])
+            ax.set_title('Sun Exposure vs Vitamin D Levels')
+            ax.set_xlabel('Sun Hours per Day')
+            ax.set_ylabel('Vitamin D (ng/ml)')
+            st.pyplot(fig)
+
+        # 4. Latitude Effect (Geographical Determinant)
+        with col4:
+            st.subheader("4. Latitude Effect (Geographical Determinant)")
+            fig, ax = plt.subplots(figsize=(5, 3)) # Adjusted figure size
+            ax.scatter(df_raw['latitude_deg'], df_raw['vitamin_d_ng_ml'])
+            ax.set_title('Latitude vs Vitamin D Levels')
+            ax.set_xlabel('Latitude (degrees)')
+            ax.set_ylabel('Vitamin D (ng/ml)')
+            st.pyplot(fig)
+
+        # 5. Screen Time vs Vitamin D
+        col5, col6 = st.columns(2)
+        with col5:
+            st.subheader("5. Screen Time vs Vitamin D (Modern Lifestyle Factor)")
+            fig, ax = plt.subplots(figsize=(5, 3)) # Adjusted figure size
+            ax.scatter(df_raw['screen_time_hours'], df_raw['vitamin_d_ng_ml'])
+            ax.set_title('Screen Time vs Vitamin D Levels')
+            ax.set_xlabel('Screen Time (hours/day)')
+            ax.set_ylabel('Vitamin D (ng/ml)')
+            st.pyplot(fig)
+
+        # 6. Outdoor Activity vs Vitamin D
+        with col6:
+            st.subheader("6. Outdoor Activity vs Vitamin D (Behavioral Exposure Factor)")
+            fig, ax = plt.subplots(figsize=(5, 3)) # Adjusted figure size
+            ax.scatter(df_raw['outdoor_activity_minutes'], df_raw['vitamin_d_ng_ml'])
+            ax.set_title('Outdoor Activity vs Vitamin D Levels')
+            ax.set_xlabel('Outdoor Activity (minutes/day)')
+            ax.set_ylabel('Vitamin D (ng/ml)')
+            st.pyplot(fig)
+
+        # Correlation Heatmap
+        st.subheader("Correlation Heatmap")
+        # Ensure df_encoded has 'deficient' as numeric for correlation
+        df_numeric_for_corr = df_encoded.copy()
+        df_numeric_for_corr = df_numeric_for_corr.astype(float, errors='ignore')
+
+        fig, ax = plt.subplots(figsize=(8, 6)) # Adjusted figure size for heatmap
+        sns.heatmap(df_numeric_for_corr.corr(), cmap='coolwarm', annot=False, fmt=".2f", ax=ax)
+        ax.set_title('Correlation Heatmap of Features')
         st.pyplot(fig)
-
-    # 2. Vitamin D vs Deficiency Status
-    with col2:
-        st.subheader("2. Vitamin D Levels by Deficiency Status")
-        fig, ax = plt.subplots(figsize=(5, 3)) # Adjusted figure size
-        ax.boxplot([
-            df_raw[df_raw['deficient'] == 0]['vitamin_d_ng_ml'],
-            df_raw[df_raw['deficient'] == 1]['vitamin_d_ng_ml']
-        ])
-        ax.set_xticks([1, 2], labels=['Non-Deficient', 'Deficient'])
-        ax.set_title('Vitamin D Levels by Deficiency Status')
-        ax.set_ylabel('Vitamin D (ng/ml)')
-        st.pyplot(fig)
-
-    # 3. Sun Exposure vs Vitamin D
-    col3, col4 = st.columns(2)
-    with col3:
-        st.subheader("3. Sun Exposure vs Vitamin D (Primary Biological Driver)")
-        fig, ax = plt.subplots(figsize=(5, 3)) # Adjusted figure size
-        ax.scatter(df_raw['sun_hours_per_day'], df_raw['vitamin_d_ng_ml'])
-        ax.set_title('Sun Exposure vs Vitamin D Levels')
-        ax.set_xlabel('Sun Hours per Day')
-        ax.set_ylabel('Vitamin D (ng/ml)')
-        st.pyplot(fig)
-
-    # 4. Latitude Effect (Geographical Determinant)
-    with col4:
-        st.subheader("4. Latitude Effect (Geographical Determinant)")
-        fig, ax = plt.subplots(figsize=(5, 3)) # Adjusted figure size
-        ax.scatter(df_raw['latitude_deg'], df_raw['vitamin_d_ng_ml'])
-        ax.set_title('Latitude vs Vitamin D Levels')
-        ax.set_xlabel('Latitude (degrees)')
-        ax.set_ylabel('Vitamin D (ng/ml)')
-        st.pyplot(fig)
-
-    # 5. Screen Time vs Vitamin D
-    col5, col6 = st.columns(2)
-    with col5:
-        st.subheader("5. Screen Time vs Vitamin D (Modern Lifestyle Factor)")
-        fig, ax = plt.subplots(figsize=(5, 3)) # Adjusted figure size
-        ax.scatter(df_raw['screen_time_hours'], df_raw['vitamin_d_ng_ml'])
-        ax.set_title('Screen Time vs Vitamin D Levels')
-        ax.set_xlabel('Screen Time (hours/day)')
-        ax.set_ylabel('Vitamin D (ng/ml)')
-        st.pyplot(fig)
-
-    # 6. Outdoor Activity vs Vitamin D
-    with col6:
-        st.subheader("6. Outdoor Activity vs Vitamin D (Behavioral Exposure Factor)")
-        fig, ax = plt.subplots(figsize=(5, 3)) # Adjusted figure size
-        ax.scatter(df_raw['outdoor_activity_minutes'], df_raw['vitamin_d_ng_ml'])
-        ax.set_title('Outdoor Activity vs Vitamin D Levels')
-        ax.set_xlabel('Outdoor Activity (minutes/day)')
-        ax.set_ylabel('Vitamin D (ng/ml)')
-        st.pyplot(fig)
-
-    # Correlation Heatmap
-    st.subheader("Correlation Heatmap")
-    # Ensure df_encoded has 'deficient' as numeric for correlation
-    df_numeric_for_corr = df_encoded.copy()
-    df_numeric_for_corr = df_numeric_for_corr.astype(float, errors='ignore')
-
-    fig, ax = plt.subplots(figsize=(8, 6)) # Adjusted figure size for heatmap
-    sns.heatmap(df_numeric_for_corr.corr(), cmap='coolwarm', annot=False, fmt=".2f", ax=ax)
-    ax.set_title('Correlation Heatmap of Features')
-    st.pyplot(fig)
+    else:
+        st.write("Please upload the `Vitamin_D_Dataset.csv` file to view the dashboard.")
 
 
 # --- Model Evaluation Tab ---
 with model_eval_tab:
-    st.header("Model Evaluation and Comparison")
+    if df_raw is not None:
+        st.header("Model Evaluation and Comparison")
 
-    # --- Make predictions for all models on the test set ---
-    # Logistic Regression
-    x_test_lr_sm = sm.add_constant(x_test[selected_lr_features])
-    y_prob_lr = lr_pred_model.predict(x_test_lr_sm)
-    y_pred_lr = (y_prob_lr > OPTIMAL_THRESHOLD).astype(int)
+        # --- Make predictions for all models on the test set ---
+        # Logistic Regression
+        x_test_lr_sm = sm.add_constant(x_test[selected_lr_features])
+        y_prob_lr = lr_pred_model.predict(x_test_lr_sm)
+        y_pred_lr = (y_prob_lr > OPTIMAL_THRESHOLD).astype(int)
 
-    # XGBoost
-    # x_test needs to be reindexed to match x_train for xgb_model
-    x_test_xgb = x_test.reindex(columns=x_train.columns, fill_value=0)
-    y_pred_xgb = xgb_model.predict(x_test_xgb)
-    y_prob_xgb = xgb_model.predict_proba(x_test_xgb)[:, 1]
+        # XGBoost
+        # x_test needs to be reindexed to match x_train for xgb_model
+        x_test_xgb = x_test.reindex(columns=x_train.columns, fill_value=0)
+        y_pred_xgb = xgb_model.predict(x_test_xgb)
+        y_prob_xgb = xgb_model.predict_proba(x_test_xgb)[:, 1]
 
-    # CatBoost
-    y_pred_cat = cat_model.predict(x_test)
-    y_prob_cat = cat_model.predict_proba(x_test)[:, 1]
+        # CatBoost
+        y_pred_cat = cat_model.predict(x_test)
+        y_prob_cat = cat_model.predict_proba(x_test)[:, 1]
 
-    # TabNet
-    y_pred_tab = tabnet_model.predict(x_test.values)
-    y_prob_tab = tabnet_model.predict_proba(x_test.values)[:, 1]
+        # TabNet
+        y_pred_tab = tabnet_model.predict(x_test.values)
+        y_prob_tab = tabnet_model.predict_proba(x_test.values)[:, 1]
 
-    # Ensemble (LR + XGBoost)
-    y_prob_ensemble = (y_prob_lr.values + y_prob_xgb) / 2
-    y_pred_ensemble = (y_prob_ensemble > OPTIMAL_THRESHOLD).astype(int)
+        # Ensemble (LR + XGBoost)
+        y_prob_ensemble = (y_prob_lr.values + y_prob_xgb) / 2
+        y_pred_ensemble = (y_prob_ensemble > OPTIMAL_THRESHOLD).astype(int)
 
 
-    # --- Model Comparison Table ---
-    st.subheader("Model Performance on Test Set")
-    model_comparison = pd.DataFrame([
-        {'Model': 'Logistic Regression', **get_metrics(y_test, y_pred_lr, y_prob_lr)},
-        {'Model': 'XGBoost', **get_metrics(y_test, y_pred_xgb, y_prob_xgb)},
-        {'Model': 'CatBoost', **get_metrics(y_test, y_pred_cat, y_prob_cat)},
-        {'Model': 'TabNet', **get_metrics(y_test, y_pred_tab, y_prob_tab)},
-        {'Model': 'Ensemble (LR+XGB)', **get_metrics(y_test, y_pred_ensemble, y_prob_ensemble)}
-    ])
-    st.dataframe(model_comparison.set_index('Model'))
+        # --- Model Comparison Table ---
+        st.subheader("Model Performance on Test Set")
+        model_comparison = pd.DataFrame([
+            {'Model': 'Logistic Regression', **get_metrics(y_test, y_pred_lr, y_prob_lr)},
+            {'Model': 'XGBoost', **get_metrics(y_test, y_pred_xgb, y_prob_xgb)},
+            {'Model': 'CatBoost', **get_metrics(y_test, y_pred_cat, y_prob_cat)},
+            {'Model': 'TabNet', **get_metrics(y_test, y_pred_tab, y_prob_tab)},
+            {'Model': 'Ensemble (LR+XGB)', **get_metrics(y_test, y_pred_ensemble, y_prob_ensemble)}
+        ])
+        st.dataframe(model_comparison.set_index('Model'))
 
-    # --- ROC Curves Comparison ---
-    st.subheader("ROC Curve Comparison")
-    fig_roc, ax_roc = plt.subplots(figsize=(5, 3)) # Adjusted figure size
-    ax_roc.plot([0, 1], [0, 1], 'k--', label='Random Classifier')
+        # --- ROC Curves Comparison ---
+        st.subheader("ROC Curve Comparison")
+        fig_roc, ax_roc = plt.subplots(figsize=(5, 3)) # Adjusted figure size
+        ax_roc.plot([0, 1], [0, 1], 'k--', label='Random Classifier')
 
-    fpr_lr, tpr_lr, _ = roc_curve(y_test, y_prob_lr)
-    ax_roc.plot(fpr_lr, tpr_lr, label=f'Logistic Regression (AUC={roc_auc_score(y_test, y_prob_lr):.3f})')
+        fpr_lr, tpr_lr, _ = roc_curve(y_test, y_prob_lr)
+        ax_roc.plot(fpr_lr, tpr_lr, label=f'Logistic Regression (AUC={roc_auc_score(y_test, y_prob_lr):.3f})')
 
-    fpr_xgb, tpr_xgb, _ = roc_curve(y_test, y_prob_xgb)
-    ax_roc.plot(fpr_xgb, tpr_xgb, label=f'XGBoost (AUC={roc_auc_score(y_test, y_prob_xgb):.3f})')
+        fpr_xgb, tpr_xgb, _ = roc_curve(y_test, y_prob_xgb)
+        ax_roc.plot(fpr_xgb, tpr_xgb, label=f'XGBoost (AUC={roc_auc_score(y_test, y_prob_xgb):.3f})')
 
-    fpr_cat, tpr_cat, _ = roc_curve(y_test, y_prob_cat)
-    ax_roc.plot(fpr_cat, tpr_cat, label=f'CatBoost (AUC={roc_auc_score(y_test, y_prob_cat):.3f})')
+        fpr_cat, tpr_cat, _ = roc_curve(y_test, y_prob_cat)
+        ax_roc.plot(fpr_cat, tpr_cat, label=f'CatBoost (AUC={roc_auc_score(y_test, y_prob_cat):.3f})')
 
-    fpr_tab, tpr_tab, _ = roc_curve(y_test, y_prob_tab)
-    ax_roc.plot(fpr_tab, tpr_tab, label=f'TabNet (AUC={roc_auc_score(y_test, y_prob_tab):.3f})')
+        fpr_tab, tpr_tab, _ = roc_curve(y_test, y_prob_tab)
+        ax_roc.plot(fpr_tab, tpr_tab, label=f'TabNet (AUC={roc_auc_score(y_test, y_prob_tab):.3f})')
 
-    fpr_ens, tpr_ens, _ = roc_curve(y_test, y_prob_ensemble)
-    ax_roc.plot(fpr_ens, tpr_ens, label=f'Ensemble (LR+XGB) (AUC={roc_auc_score(y_test, y_prob_ensemble):.3f})')
+        fpr_ens, tpr_ens, _ = roc_curve(y_test, y_prob_ensemble)
+        ax_roc.plot(fpr_ens, tpr_ens, label=f'Ensemble (LR+XGB) (AUC={roc_auc_score(y_test, y_prob_ensemble):.3f})')
 
-    ax_roc.set_xlabel('False Positive Rate')
-    ax_roc.set_ylabel('True Positive Rate')
-    ax_roc.set_title('ROC Curve Comparison of All Models')
-    ax_roc.legend(loc='lower right')
-    st.pyplot(fig_roc)
+        ax_roc.set_xlabel('False Positive Rate')
+        ax_roc.set_ylabel('True Positive Rate')
+        ax_roc.set_title('ROC Curve Comparison of All Models')
+        ax_roc.legend(loc='lower right')
+        st.pyplot(fig_roc)
 
-    # --- Decision Curve Analysis ---
-    st.subheader("Decision Curve Analysis")
-    thresholds_dca = np.linspace(0.01, 0.99, 100)
+        # --- Decision Curve Analysis ---
+        st.subheader("Decision Curve Analysis")
+        thresholds_dca = np.linspace(0.01, 0.99, 100)
 
-    nb_lr = decision_curve(y_test, y_prob_lr, thresholds_dca)
-    nb_xgb = decision_curve(y_test, y_prob_xgb, thresholds_dca)
-    nb_cat = decision_curve(y_test, y_prob_cat, thresholds_dca)
-    nb_ens = decision_curve(y_test, y_prob_ensemble, thresholds_dca)
+        nb_lr = decision_curve(y_test, y_prob_lr, thresholds_dca)
+        nb_xgb = decision_curve(y_test, y_prob_xgb, thresholds_dca)
+        nb_cat = decision_curve(y_test, y_prob_cat, thresholds_dca)
+        nb_ens = decision_curve(y_test, y_prob_ensemble, thresholds_dca)
 
-    prevalence = np.mean(y_test)
-    treat_all = [prevalence - (1 - prevalence) * (pt / (1 - pt)) for pt in thresholds_dca]
-    treat_none = [0 for _ in thresholds_dca]
+        prevalence = np.mean(y_test)
+        treat_all = [prevalence - (1 - prevalence) * (pt / (1 - pt)) for pt in thresholds_dca]
+        treat_none = [0 for _ in thresholds_dca]
 
-    fig_dca, ax_dca = plt.subplots(figsize=(5, 3)) # Adjusted figure size
-    ax_dca.plot(thresholds_dca, nb_lr, label='Logistic Regression')
-    ax_dca.plot(thresholds_dca, nb_xgb, label='XGBoost')
-    ax_dca.plot(thresholds_dca, nb_cat, label='CatBoost')
-    ax_dca.plot(thresholds_dca, nb_ens, label='Ensemble (LR+XGB)')
+        fig_dca, ax_dca = plt.subplots(figsize=(5, 3)) # Adjusted figure size
+        ax_dca.plot(thresholds_dca, nb_lr, label='Logistic Regression')
+        ax_dca.plot(thresholds_dca, nb_xgb, label='XGBoost')
+        ax_dca.plot(thresholds_dca, nb_cat, label='CatBoost')
+        ax_dca.plot(thresholds_dca, nb_ens, label='Ensemble (LR+XGB)')
 
-    ax_dca.plot(thresholds_dca, treat_all, linestyle='--', label='Treat All')
-    ax_dca.plot(thresholds_dca, treat_none, linestyle='--', label='Treat None')
+        ax_dca.plot(thresholds_dca, treat_all, linestyle='--', label='Treat All')
+        ax_dca.plot(thresholds_dca, treat_none, linestyle='--', label='Treat None')
 
-    ax_dca.set_xlabel('Threshold Probability')
-    ax_dca.set_ylabel('Net Benefit')
-    ax_dca.set_title('Decision Curve Analysis')
-    ax_dca.legend()
-    ax_dca.grid()
-    st.pyplot(fig_dca)
+        ax_dca.set_xlabel('Threshold Probability')
+        ax_dca.set_ylabel('Net Benefit')
+        ax_dca.set_title('Decision Curve Analysis')
+        ax_dca.legend()
+        ax_dca.grid()
+        st.pyplot(fig_dca)
+    else:
+        st.write("Data not loaded. Cannot display model evaluation.")
 
 
 # --- Prediction Tab ---
 with prediction_tab:
-    st.header("Predict Vitamin D Deficiency")
-    st.write("Enter the patient's characteristics to predict their vitamin D deficiency status.")
+    if df_raw is not None:
+        st.header("Predict Vitamin D Deficiency")
+        st.write("Enter the patient's characteristics to predict their vitamin D deficiency status.")
 
-    # Input widgets
-    col1, col2 = st.columns(2)
-    with col1:
-        bmi_val = st.slider("BMI", min_value=15.0, max_value=40.0, value=25.0)
-        sun_hours_per_day_val = st.slider("Sun Hours per Day", min_value=0.0, max_value=10.0, value=4.0)
-        calcium_intake_mg_val = st.slider("Calcium Intake (mg)", min_value=200.0, max_value=1600.0, value=700.0)
-        outdoor_activity_minutes_val = st.slider("Outdoor Activity (minutes/day)", min_value=0.0, max_value=180.0, value=60.0)
-        diet_score_val = st.slider("Diet Score (0-10)", min_value=0.0, max_value=10.0, value=6.0)
-    with col2:
-        skin_tone_val = st.selectbox("Skin Tone", ['Light', 'Medium', 'Dark'])
-        season_val = st.selectbox("Season", ['Spring', 'Summer', 'Monsoon', 'Winter'])
-        physical_activity_level_val = st.selectbox("Physical Activity Level", ['Low', 'Moderate', 'High'])
-        vitamin_d_supplement_iu_val = st.selectbox("Vitamin D Supplement Dose (IU)", [0, 400, 800, 1000, 2000])
-
-
-    def predict_deficiency_quiz_streamlit(
-        bmi_val, sun_hours_per_day_val, calcium_intake_mg_val, outdoor_activity_minutes_val, diet_score_val,
-        skin_tone_val, season_val, physical_activity_level_val, vitamin_d_supplement_iu_val,
-        scaler, selected_lr_features, lr_pred_model, OPTIMAL_THRESHOLD, continuous_cols_to_scale, x_train_columns
-    ):
-        feature_template = {f: 0 for f in x_train_columns} # Use x_train_columns for full set
-
-        feature_template['bmi'] = bmi_val
-        feature_template['sun_hours_per_day'] = sun_hours_per_day_val
-        feature_template['calcium_intake_mg'] = calcium_intake_mg_val
-        feature_template['outdoor_activity_minutes'] = outdoor_activity_minutes_val
-        feature_template['diet_score'] = diet_score_val
-
-        if skin_tone_val.lower() == 'light':
-            if 'skin_tone_Light' in feature_template: feature_template['skin_tone_Light'] = 1
-        elif skin_tone_val.lower() == 'medium':
-            if 'skin_tone_Medium' in feature_template: feature_template['skin_tone_Medium'] = 1
-
-        if season_val.lower() == 'spring':
-            if 'season_Spring' in feature_template: feature_template['season_Spring'] = 1
-        elif season_val.lower() == 'summer':
-            if 'season_Summer' in feature_template: feature_template['season_Summer'] = 1
-        elif season_val.lower() == 'winter':
-            if 'season_Winter' in feature_template: feature_template['season_Winter'] = 1
-
-        if physical_activity_level_val.lower() == 'low':
-            if 'physical_activity_level_Low' in feature_template: feature_template['physical_activity_level_Low'] = 1
-        elif physical_activity_level_val.lower() == 'moderate':
-            if 'physical_activity_level_Moderate' in feature_template: feature_template['physical_activity_level_Moderate'] = 1
-
-        if vitamin_d_supplement_iu_val >= 400 and vitamin_d_supplement_iu_val < 800:
-            if 'VitaminD_Supplement_Group_400' in feature_template: feature_template['VitaminD_Supplement_Group_400'] = 1
-        elif vitamin_d_supplement_iu_val >= 800 and vitamin_d_supplement_iu_val < 1000:
-            if 'VitaminD_Supplement_Group_800' in feature_template: feature_template['VitaminD_Supplement_Group_800'] = 1
-        elif vitamin_d_supplement_iu_val >= 1000 and vitamin_d_supplement_iu_val < 2000:
-            if 'VitaminD_Supplement_Group_1000' in feature_template: feature_template['VitaminD_Supplement_Group_1000'] = 1
-        elif vitamin_d_supplement_iu_val >= 2000:
-            if 'VitaminD_Supplement_Group_2000+' in feature_template: feature_template['VitaminD_Supplement_Group_2000+'] = 1
-
-        input_df_full_unscaled = pd.DataFrame([feature_template], columns=x_train_columns)
-
-        # Apply scaling to the continuous features in the input dataframe
-        input_df_full_scaled = input_df_full_unscaled.copy()
-        input_df_full_scaled[continuous_cols_to_scale] = scaler.transform(input_df_full_scaled[continuous_cols_to_scale])
-
-        # Select only the RFE-selected features for prediction
-        input_df_for_prediction = input_df_full_scaled[selected_lr_features]
-
-        # Add constant for statsmodels GLM model
-        input_df_sm = sm.add_constant(input_df_for_prediction, has_constant='add', prepend=True)
-
-        # Ensure columns match training order, fill missing with 0 if any
-        # This is crucial because RFE might select a subset of dummy variables
-        # that are not present in the current input due to user choices.
-        missing_cols_in_input = set(lr_pred_model.params.index) - set(input_df_sm.columns)
-        for c in missing_cols_in_input:
-            input_df_sm[c] = 0
-        input_df_sm = input_df_sm[lr_pred_model.params.index] # Reorder to match model
+        # Input widgets
+        col1, col2 = st.columns(2)
+        with col1:
+            bmi_val = st.slider("BMI", min_value=15.0, max_value=40.0, value=25.0)
+            sun_hours_per_day_val = st.slider("Sun Hours per Day", min_value=0.0, max_value=10.0, value=4.0)
+            calcium_intake_mg_val = st.slider("Calcium Intake (mg)", min_value=200.0, max_value=1600.0, value=700.0)
+            outdoor_activity_minutes_val = st.slider("Outdoor Activity (minutes/day)", min_value=0.0, max_value=180.0, value=60.0)
+            diet_score_val = st.slider("Diet Score (0-10)", min_value=0.0, max_value=10.0, value=6.0)
+        with col2:
+            skin_tone_val = st.selectbox("Skin Tone", ['Light', 'Medium', 'Dark'])
+            season_val = st.selectbox("Season", ['Spring', 'Summer', 'Monsoon', 'Winter'])
+            physical_activity_level_val = st.selectbox("Physical Activity Level", ['Low', 'Moderate', 'High'])
+            vitamin_d_supplement_iu_val = st.selectbox("Vitamin D Supplement Dose (IU)", [0, 400, 800, 1000, 2000])
 
 
-        risk_probability = lr_pred_model.predict(input_df_sm)[0]
-        prediction_label = 'Deficient' if risk_probability > OPTIMAL_THRESHOLD else 'Non-Deficient'
-
-        return {
-            'risk_probability': round(risk_probability, 4),
-            'prediction': prediction_label
-        }
-
-    if st.button("Predict Deficiency"):
-        prediction_result = predict_deficiency_quiz_streamlit(
+        def predict_deficiency_quiz_streamlit(
             bmi_val, sun_hours_per_day_val, calcium_intake_mg_val, outdoor_activity_minutes_val, diet_score_val,
             skin_tone_val, season_val, physical_activity_level_val, vitamin_d_supplement_iu_val,
-            scaler, selected_lr_features, lr_pred_model, OPTIMAL_THRESHOLD, continuous_cols_to_scale, x_train.columns
-        )
-        st.subheader("Prediction Results:")
-        st.write(f"**Predicted Probability of Deficiency:** {prediction_result['risk_probability']:.2f}")
-        st.write(f"**Predicted Status:** {prediction_result['prediction']}")
+            scaler, selected_lr_features, lr_pred_model, OPTIMAL_THRESHOLD, continuous_cols_to_scale, x_train_columns
+        ):
+            feature_template = {f: 0 for f in x_train_columns} # Use x_train_columns for full set
 
-    # --- SHAP Integration for example explanation (using XGBoost as an example) ---
-    st.subheader("Feature Importance Explanation (SHAP - XGBoost Model)")
-    st.write("This section provides insights into which features influence the prediction for a specific example.")
-    st.write("Note: SHAP values are calculated for the XGBoost model here. Generating these plots can be resource-intensive.")
+            feature_template['bmi'] = bmi_val
+            feature_template['sun_hours_per_day'] = sun_hours_per_day_val
+            feature_template['calcium_intake_mg'] = calcium_intake_mg_val
+            feature_template['outdoor_activity_minutes'] = outdoor_activity_minutes_val
+            feature_template['diet_score'] = diet_score_val
 
-    # Display example SHAP plot for an instance from the test set
-    example_idx = st.slider("Select an example from test set for SHAP explanation:", 0, len(x_test) - 1, 0)
-    if st.button("Generate SHAP Explanation for Example"):
-        # Ensure x_test_xgb is used as it was for XGBoost predictions
-        x_test_xgb = x_test.reindex(columns=x_train.columns, fill_value=0) # Make sure it has all columns
-        explainer_xgb = shap.TreeExplainer(xgb_model)
-        shap_values_xgb = explainer_xgb.shap_values(x_test_xgb)
+            if skin_tone_val.lower() == 'light':
+                if 'skin_tone_Light' in feature_template: feature_template['skin_tone_Light'] = 1
+            elif skin_tone_val.lower() == 'medium':
+                if 'skin_tone_Medium' in feature_template: feature_template['skin_tone_Medium'] = 1
 
-        st.write(f"**Actual Status for Example {example_idx}:** {y_test.iloc[example_idx]}")
+            if season_val.lower() == 'spring':
+                if 'season_Spring' in feature_template: feature_template['season_Spring'] = 1
+            elif season_val.lower() == 'summer':
+                if 'season_Summer' in feature_template: feature_template['season_Summer'] = 1
+            elif season_val.lower() == 'winter':
+                if 'season_Winter' in feature_template: feature_template['season_Winter'] = 1
 
-        # Force plot for a single instance
-        fig_force, ax_force = plt.subplots(figsize=(5, 2)) # Adjusted figure size
-        shap.force_plot(
-            explainer_xgb.expected_value,
-            shap_values_xgb[example_idx],
-            x_test_xgb.iloc[example_idx],
-            matplotlib=True,
-            show=False
-        )
-        plt.tight_layout()
-        st.pyplot(fig_force)
+            if physical_activity_level_val.lower() == 'low':
+                if 'physical_activity_level_Low' in feature_template: feature_template['physical_activity_level_Low'] = 1
+            elif physical_activity_level_val.lower() == 'moderate':
+                if 'physical_activity_level_Moderate' in feature_template: feature_template['physical_activity_level_Moderate'] = 1
 
-        st.write("**Summary of feature contributions for this prediction:**")
-        # Bar plot of feature contributions for the selected instance
-        fig_bar_single, ax_bar_single = plt.subplots(figsize=(5, 3))
-        shap.waterfall_plot(
-        shap.Explanation(
-                values=shap_values_xgb[example_idx],
-                base_values=explainer_xgb.expected_value,
-                data=x_test_xgb.iloc[example_idx],
-                feature_names=x_test_xgb.columns
-            ),
-            show=False
-        )
-        plt.tight_layout()
-        st.pyplot(fig_bar_single)
+            if vitamin_d_supplement_iu_val >= 400 and vitamin_d_supplement_iu_val < 800:
+                if 'VitaminD_Supplement_Group_400' in feature_template: feature_template['VitaminD_Supplement_Group_400'] = 1
+            elif vitamin_d_supplement_iu_val >= 800 and vitamin_d_supplement_iu_val < 1000:
+                if 'VitaminD_Supplement_Group_800' in feature_template: feature_template['VitaminD_Supplement_Group_800'] = 1
+            elif vitamin_d_supplement_iu_val >= 1000 and vitamin_d_supplement_iu_val < 2000:
+                if 'VitaminD_Supplement_Group_1000' in feature_template: feature_template['VitaminD_Supplement_Group_1000'] = 1
+            elif vitamin_d_supplement_iu_val >= 2000:
+                if 'VitaminD_Supplement_Group_2000+' in feature_template: feature_template['VitaminD_Supplement_Group_2000+'] = 1
+
+            input_df_full_unscaled = pd.DataFrame([feature_template], columns=x_train_columns)
+
+            # Apply scaling to the continuous features in the input dataframe
+            input_df_full_scaled = input_df_full_unscaled.copy()
+            input_df_full_scaled[continuous_cols_to_scale] = scaler.transform(input_df_full_scaled[continuous_cols_to_scale])
+
+            # Select only the RFE-selected features for prediction
+            input_df_for_prediction = input_df_full_scaled[selected_lr_features]
+
+            # Add constant for statsmodels GLM model
+            input_df_sm = sm.add_constant(input_df_for_prediction, has_constant='add', prepend=True)
+
+            # Ensure columns match training order, fill missing with 0 if any
+            # This is crucial because RFE might select a subset of dummy variables
+            # that are not present in the current input due to user choices.
+            missing_cols_in_input = set(lr_pred_model.params.index) - set(input_df_sm.columns)
+            for c in missing_cols_in_input:
+                input_df_sm[c] = 0
+            input_df_sm = input_df_sm[lr_pred_model.params.index] # Reorder to match model
 
 
-    st.write("--- Recommended for local development/exploration ---")
-    if st.checkbox("Show global SHAP summary plots (computationally intensive)"):
-        explainer_xgb = shap.TreeExplainer(xgb_model)
-        shap_values_xgb = explainer_xgb.shap_values(x_test_xgb)
+            risk_probability = lr_pred_model.predict(input_df_sm)[0]
+            prediction_label = 'Deficient' if risk_probability > OPTIMAL_THRESHOLD else 'Non-Deficient'
 
-        st.subheader("Global Feature Importance (XGBoost)")
-        fig_summary_bar, ax_summary_bar = plt.subplots(figsize=(5, 3)) # Adjusted figure size
-        shap.summary_plot(shap_values_xgb, x_test_xgb, plot_type='bar', max_display=15, show=False)
-        plt.tight_layout()
-        st.pyplot(fig_summary_bar)
+            return {
+                'risk_probability': round(risk_probability, 4),
+                'prediction': prediction_label
+            }
 
-        st.subheader("Global Feature Impact (Beeswarm Plot - XGBoost)")
-        fig_beeswarm, ax_beeswarm = plt.subplots(figsize=(5, 3)) # Adjusted figure size
-        shap.summary_plot(shap_values_xgb, x_test_xgb, max_display=15, show=False)
-        plt.tight_layout()
-        st.pyplot(fig_beeswarm)
+        if st.button("Predict Deficiency"):
+            prediction_result = predict_deficiency_quiz_streamlit(
+                bmi_val, sun_hours_per_day_val, calcium_intake_mg_val, outdoor_activity_minutes_val, diet_score_val,
+                skin_tone_val, season_val, physical_activity_level_val, vitamin_d_supplement_iu_val,
+                scaler, selected_lr_features, lr_pred_model, OPTIMAL_THRESHOLD, continuous_cols_to_scale, x_train.columns
+            )
+            st.subheader("Prediction Results:")
+            st.write(f"**Predicted Probability of Deficiency:** {prediction_result['risk_probability']:.2f}")
+            st.write(f"**Predicted Status:** {prediction_result['prediction']}")
+
+        # --- SHAP Integration for example explanation (using XGBoost as an example) ---
+        st.subheader("Feature Importance Explanation (SHAP - XGBoost Model)")
+        st.write("This section provides insights into which features influence the prediction for a specific example.")
+        st.write("Note: SHAP values are calculated for the XGBoost model here. Generating these plots can be resource-intensive.")
+
+        # Display example SHAP plot for an instance from the test set
+        example_idx = st.slider("Select an example from test set for SHAP explanation:", 0, len(x_test) - 1, 0)
+        if st.button("Generate SHAP Explanation for Example"):
+            # Ensure x_test_xgb is used as it was for XGBoost predictions
+            x_test_xgb = x_test.reindex(columns=x_train.columns, fill_value=0) # Make sure it has all columns
+            explainer_xgb = shap.TreeExplainer(xgb_model)
+            shap_values_xgb = explainer_xgb.shap_values(x_test_xgb)
+
+            st.write(f"**Actual Status for Example {example_idx}:** {y_test.iloc[example_idx]}")
+
+            # Force plot for a single instance
+            fig_force, ax_force = plt.subplots(figsize=(5, 2)) # Adjusted figure size
+            shap.force_plot(
+                explainer_xgb.expected_value,
+                shap_values_xgb[example_idx],
+                x_test_xgb.iloc[example_idx],
+                matplotlib=True,
+                show=False
+            )
+            plt.tight_layout()
+            st.pyplot(fig_force)
+
+            st.write("**Summary of feature contributions for this prediction:**")
+            # Bar plot of feature contributions for the selected instance
+            fig_bar_single, ax_bar_single = plt.subplots(figsize=(5, 3))
+            shap.waterfall_plot(
+            shap.Explanation(
+                    values=shap_values_xgb[example_idx],
+                    base_values=explainer_xgb.expected_value,
+                    data=x_test_xgb.iloc[example_idx],
+                    feature_names=x_test_xgb.columns
+                ),
+                show=False
+            )
+            plt.tight_layout()
+            st.pyplot(fig_bar_single)
+
+
+        st.write("--- Recommended for local development/exploration ---")
+        if st.checkbox("Show global SHAP summary plots (computationally intensive)"):
+            explainer_xgb = shap.TreeExplainer(xgb_model)
+            shap_values_xgb = explainer_xgb.shap_values(x_test_xgb)
+
+            st.subheader("Global Feature Importance (XGBoost)")
+            fig_summary_bar, ax_summary_bar = plt.subplots(figsize=(5, 3)) # Adjusted figure size
+            shap.summary_plot(shap_values_xgb, x_test_xgb, plot_type='bar', max_display=15, show=False)
+            plt.tight_layout()
+            st.pyplot(fig_summary_bar)
+
+            st.subheader("Global Feature Impact (Beeswarm Plot - XGBoost)")
+            fig_beeswarm, ax_beeswarm = plt.subplots(figsize=(5, 3)) # Adjusted figure size
+            shap.summary_plot(shap_values_xgb, x_test_xgb, max_display=15, show=False)
+            plt.tight_layout()
+            st.pyplot(fig_beeswarm)
+    else:
+        st.write("Data not loaded. Cannot provide predictions or SHAP explanations.")
 
 # End of Streamlit App Script
